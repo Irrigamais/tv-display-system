@@ -5,6 +5,7 @@ const sampleData = [
         tipo: "Pedido",
         numero: "PED-2024-001",
         cliente: "Cliente ABC Ltda",
+        data_abertura: "2024-01-10",
         previsao_entrega: "2024-01-15"
     },
     {
@@ -12,6 +13,7 @@ const sampleData = [
         tipo: "Ordem de Serviço",
         numero: "OS-2024-045",
         cliente: "Cliente XYZ Corp",
+        data_abertura: "2025-08-10",
         previsao_entrega: "2025-08-15"
     },
     {
@@ -19,6 +21,7 @@ const sampleData = [
         tipo: "Ordem de Fabricação",
         numero: "OF-2024-012",
         cliente: "Produto 123",
+        data_abertura: "2025-08-09",
         previsao_entrega: "2025-08-14"
     },
     {
@@ -26,6 +29,7 @@ const sampleData = [
         tipo: "Pedido",
         numero: "PED-2024-002",
         cliente: "Cliente DEF S.A.",
+        data_abertura: "2025-08-08",
         previsao_entrega: "2025-08-13"
     },
     {
@@ -33,6 +37,7 @@ const sampleData = [
         tipo: "Ordem de Serviço",
         numero: "OS-2024-046",
         cliente: "Cliente GHI Ltda",
+        data_abertura: "2024-01-20",
         previsao_entrega: "2024-01-25"
     },
     {
@@ -40,6 +45,7 @@ const sampleData = [
         tipo: "Ordem de Fabricação",
         numero: "OF-2024-013",
         cliente: "Produto 456",
+        data_abertura: "2025-08-11",
         previsao_entrega: "2025-08-16"
     },
     {
@@ -47,6 +53,7 @@ const sampleData = [
         tipo: "Pedido",
         numero: "PED-2024-003",
         cliente: "Cliente JKL Corp",
+        data_abertura: "2025-08-12",
         previsao_entrega: "2025-08-17"
     },
     {
@@ -54,6 +61,7 @@ const sampleData = [
         tipo: "Ordem de Serviço",
         numero: "OS-2024-047",
         cliente: "Cliente MNO S.A.",
+        data_abertura: "2025-08-13",
         previsao_entrega: "2025-08-18"
     },
     {
@@ -61,6 +69,7 @@ const sampleData = [
         tipo: "Ordem de Fabricação",
         numero: "OF-2024-014",
         cliente: "Produto 789",
+        data_abertura: "2024-01-30",
         previsao_entrega: "2024-02-05"
     },
     {
@@ -68,6 +77,7 @@ const sampleData = [
         tipo: "Pedido",
         numero: "PED-2024-004",
         cliente: "Cliente PQR Ltda",
+        data_abertura: "2025-08-14",
         previsao_entrega: "2025-08-19"
     }
 ];
@@ -173,6 +183,7 @@ class TVDisplaySystem {
         
         const delayText = this.getDelayText(item.dias_atraso, item.status);
         const formattedDate = this.formatDate(item.previsao_entrega);
+        const formattedOpeningDate = this.formatDate(item.data_abertura);
         
         // Botão de ocultar apenas para cards no prazo
         const hideButton = item.status === 'no-prazo' ? 
@@ -190,6 +201,10 @@ class TVDisplaySystem {
                 <div class="card-info">
                     <span class="info-label">Cliente/Produto:</span>
                     <span class="info-value">${item.cliente}</span>
+                </div>
+                <div class="card-info">
+                    <span class="info-label">Data de Abertura:</span>
+                    <span class="info-value">${formattedOpeningDate}</span>
                 </div>
             </div>
             <div class="card-footer">
@@ -363,6 +378,7 @@ class ModalManager {
             tipo: document.getElementById('cardTipo').value,
             numero: document.getElementById('cardNumero').value,
             cliente: document.getElementById('cardCliente').value,
+            data_abertura: document.getElementById('cardDataAbertura').value,
             previsao_entrega: document.getElementById('cardPrevisao').value
         };
         
@@ -382,7 +398,7 @@ class ModalManager {
     }
     
     validateCard(card) {
-        if (!card.tipo || !card.numero || !card.cliente || !card.previsao_entrega) {
+        if (!card.tipo || !card.numero || !card.cliente || !card.data_abertura || !card.previsao_entrega) {
             alert('Por favor, preencha todos os campos obrigatórios.');
             return false;
         }
