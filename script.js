@@ -174,12 +174,16 @@ class TVDisplaySystem {
         const delayText = this.getDelayText(item.dias_atraso, item.status);
         const formattedDate = this.formatDate(item.previsao_entrega);
         
+        // Botão de ocultar apenas para cards no prazo
+        const hideButton = item.status === 'no-prazo' ? 
+            `<button class="hide-card-btn" onclick="window.tvSystem.hideCard(${item.id})" title="Ocultar card atendido">
+                ✓
+            </button>` : '';
+        
         card.innerHTML = `
             <div class="card-header">
                 <span class="card-type">${item.tipo}</span>
-                <button class="hide-card-btn" onclick="window.tvSystem.hideCard(${item.id})" title="Ocultar card atendido">
-                    ✓
-                </button>
+                ${hideButton}
             </div>
             <div class="card-number">${item.numero}</div>
             <div class="card-body">
