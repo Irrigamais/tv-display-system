@@ -10,7 +10,10 @@
     <div class="container">
         <header>
             <h1>Sistema de Controle de Pedidos</h1>
-            <div class="datetime" id="datetime"></div>
+            <div class="header-controls">
+                <button class="add-card-btn" id="addCardBtn">+ Adicionar Card</button>
+                <div class="datetime" id="datetime"></div>
+            </div>
         </header>
         
         <main class="cards-container" id="cardsContainer">
@@ -25,6 +28,43 @@
                 </div>
             </div>
         </footer>
+    </div>
+    
+    <!-- Modal para adicionar card -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Adicionar Novo Card</h2>
+                <button class="close-btn" id="closeModalBtn">&times;</button>
+            </div>
+            <form class="modal-form" id="addCardForm">
+                <div class="form-group">
+                    <label for="cardTipo">Tipo:</label>
+                    <select id="cardTipo" required>
+                        <option value="">Selecione o tipo</option>
+                        <option value="Pedido">Pedido</option>
+                        <option value="Ordem de Serviço">Ordem de Serviço</option>
+                        <option value="Ordem de Fabricação">Ordem de Fabricação</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="cardNumero">Número:</label>
+                    <input type="text" id="cardNumero" placeholder="Ex: PED-2024-001" required>
+                </div>
+                <div class="form-group">
+                    <label for="cardCliente">Cliente/Produto:</label>
+                    <input type="text" id="cardCliente" placeholder="Nome do cliente ou produto" required>
+                </div>
+                <div class="form-group">
+                    <label for="cardPrevisao">Previsão de Entrega:</label>
+                    <input type="date" id="cardPrevisao" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" id="cancelBtn">Cancelar</button>
+                    <button type="submit" class="btn-save">Salvar</button>
+                </div>
+            </form>
+        </div>
     </div>
     
     <script src="script.js"></script>

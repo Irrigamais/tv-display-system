@@ -297,3 +297,154 @@ document.addEventListener("keydown", (e) => {
 });
 
 
+
+
+// Classe para gerenciar o modal
+class ModalManager {
+    constructor(tvSystem) {
+        this.tvSystem = tvSystem;
+        this.modal = document.getElementById('modalOverlay');
+        this.form = document.getElementById('addCardForm');
+        this.addBtn = document.getElementById('addCardBtn');
+        this.closeBtn = document.getElementById('closeModalBtn');
+        this.cancelBtn = document.getElementById('cancelBtn');
+        
+        this.init();
+    }
+    
+    init() {
+        // Event listeners
+        this.addBtn.addEventListener('click', () => this.openModal());
+        this.closeBtn.addEventListener('click', () => this.closeModal());
+        this.cancelBtn.addEventListener('click', () => this.closeModal());
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) this.closeModal();
+        });
+        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+        
+        // Fechar modal com ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal.classList.contains('active')) {
+                this.closeModal();
+            }
+        });
+    }
+    
+    openModal() {
+        this.modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        // Focar no primeiro campo
+        setTimeout(() => {
+            document.getElementById('cardTipo').focus();
+        }, 300);
+    }
+    
+    closeModal() {
+        this.modal.classList.remove('active');
+        document.body.style.overflow = 'hidden'; // Manter overflow hidden para TV
+        this.form.reset();
+    }
+    
+    handleSubmit(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this.form);
+        const newCard = {
+            id: Date.now(), // ID único baseado no timestamp
+            tipo: document.getElementById('cardTipo').value,
+            numero: document.getElementById('cardNumero').value,
+            cliente: document.getElementById('cardCliente').value,
+            previsao_entrega: document.getElementById('cardPrevisao').value
+        };
+        
+        // Validar dados
+        if (!this.validateCard(newCard)) {
+            return;
+        }
+        
+        // Adicionar card ao sistema
+        this.tvSystem.addCard(newCard);
+        
+        // Fechar modal
+        this.closeModal();
+        
+        // Mostrar feedback (opcional)
+        this.showSuccessMessage();
+    }
+    
+    validateCard(card) {
+        if (!card.tipo || !card.numero || !card.cliente || !card.previsao_entrega) {
+            alert('Por favor, preencha todos os campos obrigatórios.');
+            return false;
+        }
+        
+        // Verificar se o número já existe
+        const exists = sampleData.some(item => item.numero === card.numero);
+        if (exists) {
+            alert('Já existe um card com este número. Por favor, use um número diferente.');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    showSuccessMessage() {
+        // Criar elemento de notificação
+        const notification = document.createElement('div');
+        notification.className = 'success-notification';
+        notification.textContent = 'Card adicionado com sucesso!';
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Remover após 3 segundos
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease forwards';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+}
+
+// Adicionar método addCard à classe TVDisplaySystem
+TVDisplaySystem.prototype.addCard = function(newCard) {
+    // Adicionar ao array de dados
+    sampleData.push(newCard);
+    
+    // Reprocessar dados com status automático
+    this.data = this.processData(sampleData);
+    
+    // Recalcular paginação
+    this.totalPages = Math.ceil(this.data.length / this.cardsPerPage);
+    
+    // Ir para a última página se necessário
+    const lastPage = this.totalPages - 1;
+    this.currentPage = lastPage;
+    
+    // Renderizar cards
+    this.renderCards();
+    
+    // Reiniciar rotação
+    this.stopAutoRotation();
+    this.startAutoRotation();
+};
+
+// Modificar a inicialização para incluir o modal
+document.addEventListener("DOMContentLoaded", () => {
+    window.tvSystem = new TVDisplaySystem();
+    window.modalManager = new ModalManager(window.tvSystem);
+});
+
