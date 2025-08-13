@@ -473,21 +473,13 @@ class ModalManager {
         
         const prefix = prefixMap[tipo] || '';
         if (prefix) {
-            // Gerar número sequencial baseado no ano atual
-            const year = new Date().getFullYear();
-            const existingNumbers = sampleData
-                .filter(item => item.tipo === tipo)
-                .map(item => {
-                    const match = item.numero.match(/(\d+)$/);
-                    return match ? parseInt(match[1]) : 0;
-                })
-                .sort((a, b) => b - a);
-            
-            const nextNumber = existingNumbers.length > 0 ? existingNumbers[0] + 1 : 1;
-            const paddedNumber = nextNumber.toString().padStart(3, '0');
-            
-            numeroField.value = `${prefix}${year}-${paddedNumber}`;
-            numeroField.readOnly = true;
+            numeroField.value = prefix;
+            numeroField.readOnly = false;
+            // Posicionar cursor após o prefixo
+            setTimeout(() => {
+                numeroField.focus();
+                numeroField.setSelectionRange(prefix.length, prefix.length);
+            }, 100);
         } else {
             numeroField.value = '';
             numeroField.readOnly = false;
