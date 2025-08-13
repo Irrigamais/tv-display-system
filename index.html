@@ -11,6 +11,7 @@
         <header>
             <h1>Sistema de Controle de Pedidos</h1>
             <div class="header-controls">
+                <button class="history-btn" id="historyBtn">📋 Histórico</button>
                 <button class="add-card-btn" id="addCardBtn">+ Adicionar Card</button>
                 <div class="datetime" id="datetime"></div>
             </div>
@@ -70,6 +71,19 @@
                     <button type="submit" class="btn-save">Salvar</button>
                 </div>
             </form>
+        </div>
+    </div>
+    
+    <!-- Modal para histórico de cards -->
+    <div class="modal-overlay" id="historyModalOverlay">
+        <div class="modal history-modal">
+            <div class="modal-header">
+                <h2>Histórico de Cards Ocultos</h2>
+                <button class="close-btn" id="closeHistoryModalBtn">&times;</button>
+            </div>
+            <div class="history-content" id="historyContent">
+                <!-- Cards ocultos serão inseridos aqui dinamicamente -->
+            </div>
         </div>
     </div>
     

@@ -58,6 +58,25 @@ header h1 {
     transform: translateY(-2px);
 }
 
+.history-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.history-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+}
+
 .datetime {
     font-size: 1.8rem;
     font-weight: 300;
@@ -541,5 +560,77 @@ footer {
         transform: translateX(100%);
         opacity: 0;
     }
+}
+
+
+
+/* Estilos específicos para o modal de histórico */
+.history-modal {
+    max-width: 800px;
+    max-height: 80vh;
+}
+
+.history-content {
+    padding: 20px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.history-card {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.history-card:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.history-card-info {
+    flex: 1;
+}
+
+.history-card-title {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #1f2937;
+    margin-bottom: 5px;
+}
+
+.history-card-details {
+    color: #6b7280;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.restore-btn {
+    background: #10b981;
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.restore-btn:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
+
+.empty-history {
+    text-align: center;
+    color: #6b7280;
+    font-style: italic;
+    padding: 40px 20px;
 }
 

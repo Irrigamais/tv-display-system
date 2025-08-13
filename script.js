@@ -82,6 +82,9 @@ const sampleData = [
     }
 ];
 
+// Array para armazenar cards ocultos
+let hiddenCards = [];
+
 class TVDisplaySystem {
     constructor() {
         this.data = this.processData(sampleData);
@@ -194,11 +197,10 @@ class TVDisplaySystem {
         const formattedDate = item.previsao_entrega ? this.formatDate(item.previsao_entrega) : 'Não definida';
         const formattedOpeningDate = this.formatDate(item.data_abertura);
         
-        // Botão de ocultar apenas para cards no prazo
-        const hideButton = item.status === 'no-prazo' ? 
-            `<button class="hide-card-btn" onclick="window.tvSystem.hideCard(${item.id})" title="Ocultar card atendido">
+        // Botão de ocultar para todos os cards
+        const hideButton = `<button class="hide-card-btn" onclick="window.tvSystem.hideCard(${item.id})" title="Ocultar card atendido">
                 ✓
-            </button>` : '';
+            </button>`;
             
         // Botão de editar data apenas para Solicitação de Compra
         const editButton = item.tipo === 'Solicitação de Compra' ? 
@@ -503,6 +505,146 @@ class ModalManager {
     }
 }
 
+// Classe para gerenciar o histórico
+class HistoryManager {
+    constructor(tvSystem) {
+        this.tvSystem = tvSystem;
+        this.modal = document.getElementById('historyModalOverlay');
+        this.content = document.getElementById('historyContent');
+        this.historyBtn = document.getElementById('historyBtn');
+        this.closeBtn = document.getElementById('closeHistoryModalBtn');
+        
+        this.init();
+    }
+    
+    init() {
+        // Event listeners
+        this.historyBtn.addEventListener('click', () => this.openModal());
+        this.closeBtn.addEventListener('click', () => this.closeModal());
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) this.closeModal();
+        });
+        
+        // Fechar modal com ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal.classList.contains('active')) {
+                this.closeModal();
+            }
+        });
+    }
+    
+    openModal() {
+        this.modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        this.renderHistory();
+    }
+    
+    closeModal() {
+        this.modal.classList.remove('active');
+        document.body.style.overflow = 'hidden'; // Manter overflow hidden para TV
+    }
+    
+    renderHistory() {
+        if (hiddenCards.length === 0) {
+            this.content.innerHTML = '<div class="empty-history">Nenhum card foi ocultado ainda.</div>';
+            return;
+        }
+        
+        this.content.innerHTML = hiddenCards.map(card => {
+            const hiddenDate = new Date(card.hiddenDate).toLocaleDateString('pt-BR');
+            const formattedOpeningDate = this.tvSystem.formatDate(card.data_abertura);
+            const formattedDeliveryDate = card.previsao_entrega ? this.tvSystem.formatDate(card.previsao_entrega) : 'Não definida';
+            
+            return `
+                <div class="history-card">
+                    <div class="history-card-info">
+                        <div class="history-card-title">${card.tipo} - ${card.numero}</div>
+                        <div class="history-card-details">
+                            Cliente/Produto: ${card.cliente}<br>
+                            Data de Abertura: ${formattedOpeningDate}<br>
+                            Previsão de Entrega: ${formattedDeliveryDate}<br>
+                            Ocultado em: ${hiddenDate}
+                        </div>
+                    </div>
+                    <button class="restore-btn" onclick="window.historyManager.restoreCard(${card.id})">
+                        Reexibir
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    restoreCard(cardId) {
+        if (confirm('Tem certeza que deseja reexibir este card?')) {
+            // Encontrar o card no histórico
+            const cardIndex = hiddenCards.findIndex(item => item.id === cardId);
+            
+            if (cardIndex !== -1) {
+                // Remover do histórico e adicionar de volta ao array principal
+                const restoredCard = hiddenCards.splice(cardIndex, 1)[0];
+                
+                // Remover a propriedade hiddenDate antes de adicionar de volta
+                delete restoredCard.hiddenDate;
+                
+                sampleData.push(restoredCard);
+                
+                // Reprocessar dados
+                this.tvSystem.data = this.tvSystem.processData(sampleData);
+                
+                // Recalcular paginação
+                this.tvSystem.totalPages = Math.ceil(this.tvSystem.data.length / this.tvSystem.cardsPerPage);
+                
+                // Ir para a última página se necessário
+                const lastPage = this.tvSystem.totalPages - 1;
+                this.tvSystem.currentPage = lastPage;
+                
+                // Renderizar cards
+                this.tvSystem.renderCards();
+                
+                // Reiniciar rotação
+                this.tvSystem.stopAutoRotation();
+                this.tvSystem.startAutoRotation();
+                
+                // Atualizar histórico
+                this.renderHistory();
+                
+                // Mostrar notificação
+                this.showRestoreNotification(restoredCard.numero);
+            }
+        }
+    }
+    
+    showRestoreNotification(cardNumber) {
+        const notification = document.createElement('div');
+        notification.className = 'restore-notification';
+        notification.textContent = `Card ${cardNumber} foi reexibido com sucesso!`;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 2000;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Remover após 3 segundos
+        setTimeout(() => {
+            notification.style.animation = 'slideOut 0.3s ease forwards';
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+}
+
 // Adicionar método addCard à classe TVDisplaySystem
 TVDisplaySystem.prototype.addCard = function(newCard) {
     // Adicionar ao array de dados
@@ -528,12 +670,17 @@ TVDisplaySystem.prototype.addCard = function(newCard) {
 
 // Adicionar método hideCard à classe TVDisplaySystem
 TVDisplaySystem.prototype.hideCard = function(cardId) {
-    // Confirmar ação
-    if (confirm('Tem certeza que deseja ocultar este card? Esta ação não pode ser desfeita.')) {
-        // Remover do array de dados
-        const cardIndex = sampleData.findIndex(card => card.id === cardId);
+    if (confirm('Tem certeza que deseja ocultar este card? Ele será movido para o histórico.')) {
+        // Encontrar o card no array principal
+        const cardIndex = sampleData.findIndex(item => item.id === cardId);
+        
         if (cardIndex !== -1) {
+            // Remover do array principal e adicionar ao histórico
             const removedCard = sampleData.splice(cardIndex, 1)[0];
+            hiddenCards.push({
+                ...removedCard,
+                hiddenDate: new Date().toISOString()
+            });
             
             // Reprocessar dados
             this.data = this.processData(sampleData);
@@ -651,9 +798,10 @@ TVDisplaySystem.prototype.showHideNotification = function(cardNumber) {
     }, 3000);
 };
 
-// Modificar a inicialização para incluir o modal
+// Modificar a inicialização para incluir o modal e histórico
 document.addEventListener("DOMContentLoaded", () => {
     window.tvSystem = new TVDisplaySystem();
     window.modalManager = new ModalManager(window.tvSystem);
+    window.historyManager = new HistoryManager(window.tvSystem);
 });
 
