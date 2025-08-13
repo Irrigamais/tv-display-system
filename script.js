@@ -169,6 +169,7 @@ class TVDisplaySystem {
     createCard(item) {
         const card = document.createElement("div");
         card.className = `card ${item.status}`;
+        card.setAttribute('data-card-id', item.id);
         
         const delayText = this.getDelayText(item.dias_atraso, item.status);
         const formattedDate = this.formatDate(item.previsao_entrega);
@@ -176,6 +177,9 @@ class TVDisplaySystem {
         card.innerHTML = `
             <div class="card-header">
                 <span class="card-type">${item.tipo}</span>
+                <button class="hide-card-btn" onclick="window.tvSystem.hideCard(${item.id})" title="Ocultar card atendido">
+                    ✓
+                </button>
             </div>
             <div class="card-number">${item.numero}</div>
             <div class="card-body">
@@ -440,6 +444,70 @@ TVDisplaySystem.prototype.addCard = function(newCard) {
     // Reiniciar rotação
     this.stopAutoRotation();
     this.startAutoRotation();
+};
+
+// Adicionar método hideCard à classe TVDisplaySystem
+TVDisplaySystem.prototype.hideCard = function(cardId) {
+    // Confirmar ação
+    if (confirm('Tem certeza que deseja ocultar este card? Esta ação não pode ser desfeita.')) {
+        // Remover do array de dados
+        const cardIndex = sampleData.findIndex(card => card.id === cardId);
+        if (cardIndex !== -1) {
+            const removedCard = sampleData.splice(cardIndex, 1)[0];
+            
+            // Reprocessar dados
+            this.data = this.processData(sampleData);
+            
+            // Recalcular paginação
+            this.totalPages = Math.ceil(this.data.length / this.cardsPerPage);
+            
+            // Ajustar página atual se necessário
+            if (this.currentPage >= this.totalPages && this.totalPages > 0) {
+                this.currentPage = this.totalPages - 1;
+            }
+            
+            // Renderizar cards
+            this.renderCards();
+            
+            // Reiniciar rotação
+            this.stopAutoRotation();
+            this.startAutoRotation();
+            
+            // Mostrar notificação de sucesso
+            this.showHideNotification(removedCard.numero);
+        }
+    }
+};
+
+// Adicionar método para mostrar notificação de card oculto
+TVDisplaySystem.prototype.showHideNotification = function(cardNumber) {
+    const notification = document.createElement('div');
+    notification.className = 'hide-notification';
+    notification.textContent = `Card ${cardNumber} foi ocultado com sucesso!`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #f59e0b;
+        color: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        font-weight: 600;
+        z-index: 2000;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Remover após 3 segundos
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease forwards';
+        setTimeout(() => {
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
 };
 
 // Modificar a inicialização para incluir o modal
