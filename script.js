@@ -78,7 +78,7 @@ class TVDisplaySystem {
         this.cardsPerPage = 6; // Padrão: 6 cards por página
         this.currentPage = 0;
         this.totalPages = Math.ceil(this.data.length / this.cardsPerPage);
-        this.autoRotateInterval = 8000; // 8 segundos por página
+        this.autoRotateInterval = 15000; // 15 segundos por página (aumentado de 8)
         this.rotationTimer = null;
         
         this.init();

@@ -203,11 +203,44 @@ header h1 {
 .delay-info.proximo-prazo {
     background: #fef3c7;
     color: #92400e;
+    animation: blinkSlow 2s infinite;
 }
 
 .delay-info.atrasado {
     background: #fee2e2;
     color: #991b1b;
+    animation: blinkFast 0.8s infinite;
+}
+
+/* Animação de piscar lenta para cards amarelos (próximo do prazo) */
+@keyframes blinkSlow {
+    0%, 50% {
+        opacity: 1;
+    }
+    51%, 100% {
+        opacity: 0.3;
+    }
+}
+
+/* Animação de piscar rápida para cards vermelhos (atrasados) */
+@keyframes blinkFast {
+    0%, 50% {
+        opacity: 1;
+    }
+    51%, 100% {
+        opacity: 0.2;
+    }
+}
+
+/* Piscar também a borda superior dos cards */
+.card.proximo-prazo::before {
+    --status-color: #f59e0b;
+    animation: blinkSlow 2s infinite;
+}
+
+.card.atrasado::before {
+    --status-color: #ef4444;
+    animation: blinkFast 0.8s infinite;
 }
 
 footer {
