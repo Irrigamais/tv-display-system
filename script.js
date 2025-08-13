@@ -131,6 +131,15 @@ class TVDisplaySystem {
         today.setHours(0, 0, 0, 0);
 
         return rawData.map(item => {
+            // Se não há previsão de entrega (Solicitação de Compra), usar status padrão
+            if (!item.previsao_entrega) {
+                return {
+                    ...item,
+                    status: "no-prazo",
+                    dias_atraso: 0
+                };
+            }
+            
             const previsaoDate = new Date(item.previsao_entrega);
             previsaoDate.setHours(0, 0, 0, 0);
 
@@ -182,7 +191,7 @@ class TVDisplaySystem {
         card.setAttribute('data-card-id', item.id);
         
         const delayText = this.getDelayText(item.dias_atraso, item.status);
-        const formattedDate = this.formatDate(item.previsao_entrega);
+        const formattedDate = item.previsao_entrega ? this.formatDate(item.previsao_entrega) : 'Não definida';
         const formattedOpeningDate = this.formatDate(item.data_abertura);
         
         // Botão de ocultar apenas para cards no prazo
@@ -417,8 +426,15 @@ class ModalManager {
     }
     
     validateCard(card) {
-        if (!card.tipo || !card.numero || !card.cliente || !card.data_abertura || !card.previsao_entrega) {
+        // Validação básica para todos os tipos
+        if (!card.tipo || !card.numero || !card.cliente || !card.data_abertura) {
             alert('Por favor, preencha todos os campos obrigatórios.');
+            return false;
+        }
+        
+        // Previsão de entrega é obrigatória para todos os tipos exceto Solicitação de Compra
+        if (card.tipo !== 'Solicitação de Compra' && !card.previsao_entrega) {
+            alert('Por favor, preencha a previsão de entrega.');
             return false;
         }
         
