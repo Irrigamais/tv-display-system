@@ -190,11 +190,20 @@ class TVDisplaySystem {
             `<button class="hide-card-btn" onclick="window.tvSystem.hideCard(${item.id})" title="Ocultar card atendido">
                 ✓
             </button>` : '';
+            
+        // Botão de editar data apenas para Solicitação de Compra
+        const editButton = item.tipo === 'Solicitação de Compra' ? 
+            `<button class="edit-date-btn" onclick="window.tvSystem.editDeliveryDate(${item.id})" title="Editar previsão de entrega">
+                📅
+            </button>` : '';
         
         card.innerHTML = `
             <div class="card-header">
                 <span class="card-type">${item.tipo}</span>
-                ${hideButton}
+                <div class="card-actions">
+                    ${editButton}
+                    ${hideButton}
+                </div>
             </div>
             <div class="card-number">${item.numero}</div>
             <div class="card-body">
@@ -345,6 +354,11 @@ class ModalManager {
         });
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
         
+        // Event listener para mudança de tipo (prefixo automático)
+        document.getElementById('cardTipo').addEventListener('change', (e) => {
+            this.updateNumberPrefix(e.target.value);
+        });
+        
         // Fechar modal com ESC
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.modal.classList.contains('active')) {
@@ -367,6 +381,11 @@ class ModalManager {
         this.modal.classList.remove('active');
         document.body.style.overflow = 'hidden'; // Manter overflow hidden para TV
         this.form.reset();
+        
+        // Resetar campo número
+        const numeroField = document.getElementById('cardNumero');
+        numeroField.readOnly = false;
+        numeroField.value = '';
     }
     
     handleSubmit(e) {
@@ -441,6 +460,39 @@ class ModalManager {
             }, 300);
         }, 3000);
     }
+    
+    updateNumberPrefix(tipo) {
+        const numeroField = document.getElementById('cardNumero');
+        const prefixMap = {
+            'Pedido': 'PED-',
+            'Ordem de Serviço': 'OS-',
+            'Ordem de Fabricação': 'OF-',
+            'Ordem de Separação': 'O.SEP-',
+            'Solicitação de Compra': 'SC-'
+        };
+        
+        const prefix = prefixMap[tipo] || '';
+        if (prefix) {
+            // Gerar número sequencial baseado no ano atual
+            const year = new Date().getFullYear();
+            const existingNumbers = sampleData
+                .filter(item => item.tipo === tipo)
+                .map(item => {
+                    const match = item.numero.match(/(\d+)$/);
+                    return match ? parseInt(match[1]) : 0;
+                })
+                .sort((a, b) => b - a);
+            
+            const nextNumber = existingNumbers.length > 0 ? existingNumbers[0] + 1 : 1;
+            const paddedNumber = nextNumber.toString().padStart(3, '0');
+            
+            numeroField.value = `${prefix}${year}-${paddedNumber}`;
+            numeroField.readOnly = true;
+        } else {
+            numeroField.value = '';
+            numeroField.readOnly = false;
+        }
+    }
 }
 
 // Adicionar método addCard à classe TVDisplaySystem
@@ -497,6 +549,67 @@ TVDisplaySystem.prototype.hideCard = function(cardId) {
             this.showHideNotification(removedCard.numero);
         }
     }
+};
+
+// Adicionar método editDeliveryDate à classe TVDisplaySystem
+TVDisplaySystem.prototype.editDeliveryDate = function(cardId) {
+    const card = sampleData.find(item => item.id === cardId);
+    if (!card) return;
+    
+    const currentDate = card.previsao_entrega;
+    const newDate = prompt(`Editar previsão de entrega para ${card.numero}:\n\nData atual: ${this.formatDate(currentDate)}\n\nInsira a nova data (AAAA-MM-DD):`, currentDate);
+    
+    if (newDate && newDate !== currentDate) {
+        // Validar formato da data
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(newDate)) {
+            alert('Formato de data inválido. Use AAAA-MM-DD (ex: 2025-12-31)');
+            return;
+        }
+        
+        // Atualizar a data
+        card.previsao_entrega = newDate;
+        
+        // Reprocessar dados para atualizar status
+        this.data = this.processData(sampleData);
+        
+        // Renderizar cards
+        this.renderCards();
+        
+        // Mostrar notificação
+        this.showEditNotification(card.numero, this.formatDate(newDate));
+    }
+};
+
+// Adicionar método para mostrar notificação de edição
+TVDisplaySystem.prototype.showEditNotification = function(cardNumber, newDate) {
+    const notification = document.createElement('div');
+    notification.className = 'edit-notification';
+    notification.textContent = `Previsão de entrega do card ${cardNumber} atualizada para ${newDate}!`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #3b82f6;
+        color: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        font-weight: 600;
+        z-index: 2000;
+        animation: slideIn 0.3s ease;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Remover após 3 segundos
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease forwards';
+        setTimeout(() => {
+            if (document.body.contains(notification)) {
+                document.body.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
 };
 
 // Adicionar método para mostrar notificação de card oculto
