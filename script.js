@@ -85,8 +85,32 @@ const sampleData = [
 // Array para armazenar cards ocultos
 let hiddenCards = [];
 
+// Funções para persistência de dados
+function saveDataToLocalStorage() {
+    localStorage.setItem('tvDisplayCards', JSON.stringify(sampleData));
+    localStorage.setItem('tvDisplayHiddenCards', JSON.stringify(hiddenCards));
+}
+
+function loadDataFromLocalStorage() {
+    const savedCards = localStorage.getItem('tvDisplayCards');
+    const savedHiddenCards = localStorage.getItem('tvDisplayHiddenCards');
+    
+    if (savedCards) {
+        sampleData.length = 0; // Limpar array existente
+        sampleData.push(...JSON.parse(savedCards));
+    }
+    
+    if (savedHiddenCards) {
+        hiddenCards.length = 0; // Limpar array existente
+        hiddenCards.push(...JSON.parse(savedHiddenCards));
+    }
+}
+
 class TVDisplaySystem {
     constructor() {
+        // Carregar dados salvos do localStorage
+        loadDataFromLocalStorage();
+        
         this.data = this.processData(sampleData);
         this.cardsPerPage = 6; // Padrão: 6 cards por página
         this.currentPage = 0;
@@ -253,7 +277,10 @@ class TVDisplaySystem {
     
     formatDate(dateString) {
         const date = new Date(dateString);
-        return date.toLocaleDateString("pt-BR");
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
     }
     
     renderCards() {
@@ -408,8 +435,8 @@ class ModalManager {
             tipo: document.getElementById('cardTipo').value,
             numero: document.getElementById('cardNumero').value,
             cliente: document.getElementById('cardCliente').value,
-            data_abertura: document.getElementById('cardDataAbertura').value,
-            previsao_entrega: document.getElementById('cardPrevisao').value
+            data_abertura: this.parseDateToISO(document.getElementById("cardDataAbertura").value),
+            previsao_entrega: this.parseDateToISO(document.getElementById("cardPrevisao").value)
         };
         
         // Validar dados
@@ -435,10 +462,10 @@ class ModalManager {
         }
         
         // Previsão de entrega é obrigatória para todos os tipos exceto Solicitação de Compra
-        if (card.tipo !== 'Solicitação de Compra' && !card.previsao_entrega) {
-            alert('Por favor, preencha a previsão de entrega.');
-            return false;
-        }
+        // if (card.tipo !== 'Solicitação de Compra' && !card.previsao_entrega) {
+        //     alert('Por favor, preencha a previsão de entrega.');
+        //     return false;
+        // }
         
         // Verificar se o número já existe
         const exists = sampleData.some(item => item.numero === card.numero);
@@ -588,6 +615,9 @@ class HistoryManager {
                 
                 sampleData.push(restoredCard);
                 
+                // Salvar no localStorage
+                saveDataToLocalStorage();
+                
                 // Reprocessar dados
                 this.tvSystem.data = this.tvSystem.processData(sampleData);
                 
@@ -650,6 +680,9 @@ TVDisplaySystem.prototype.addCard = function(newCard) {
     // Adicionar ao array de dados
     sampleData.push(newCard);
     
+    // Salvar no localStorage
+    saveDataToLocalStorage();
+    
     // Reprocessar dados com status automático
     this.data = this.processData(sampleData);
     
@@ -682,6 +715,9 @@ TVDisplaySystem.prototype.hideCard = function(cardId) {
                 hiddenDate: new Date().toISOString()
             });
             
+            // Salvar no localStorage
+            saveDataToLocalStorage();
+            
             // Reprocessar dados
             this.data = this.processData(sampleData);
             
@@ -712,18 +748,35 @@ TVDisplaySystem.prototype.editDeliveryDate = function(cardId) {
     if (!card) return;
     
     const currentDate = card.previsao_entrega;
-    const newDate = prompt(`Editar previsão de entrega para ${card.numero}:\n\nData atual: ${this.formatDate(currentDate)}\n\nInsira a nova data (AAAA-MM-DD):`, currentDate);
+    const currentDateFormatted = currentDate ? this.formatDate(currentDate) : 'Não definida';
+    const newDate = prompt(`Editar previsão de entrega para ${card.numero}:\n\nData atual: ${currentDateFormatted}\n\nInsira a nova data (DD-MM-AAAA):`, currentDateFormatted !== 'Não definida' ? currentDateFormatted : '');
     
-    if (newDate && newDate !== currentDate) {
-        // Validar formato da data
-        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-        if (!dateRegex.test(newDate)) {
-            alert('Formato de data inválido. Use AAAA-MM-DD (ex: 2025-12-31)');
+    if (newDate && newDate !== currentDateFormatted) {
+        // Validar formato da data DD-MM-AAAA
+        const dateRegex = /^(\d{2})-(\d{2})-(\d{4})$/;
+        const match = newDate.match(dateRegex);
+        
+        if (!match) {
+            alert('Formato de data inválido. Use DD-MM-AAAA (ex: 31-12-2025)');
+            return;
+        }
+        
+        // Converter DD-MM-AAAA para AAAA-MM-DD
+        const [, day, month, year] = match;
+        const isoDate = `${year}-${month}-${day}`;
+        
+        // Validar se a data é válida
+        const testDate = new Date(isoDate);
+        if (testDate.getFullYear() != year || testDate.getMonth() + 1 != month || testDate.getDate() != day) {
+            alert('Data inválida. Verifique se a data existe.');
             return;
         }
         
         // Atualizar a data
-        card.previsao_entrega = newDate;
+        card.previsao_entrega = isoDate;
+        
+        // Salvar no localStorage
+        saveDataToLocalStorage();
         
         // Reprocessar dados para atualizar status
         this.data = this.processData(sampleData);
@@ -732,7 +785,7 @@ TVDisplaySystem.prototype.editDeliveryDate = function(cardId) {
         this.renderCards();
         
         // Mostrar notificação
-        this.showEditNotification(card.numero, this.formatDate(newDate));
+        this.showEditNotification(card.numero, this.formatDate(isoDate));
     }
 };
 
@@ -804,4 +857,16 @@ document.addEventListener("DOMContentLoaded", () => {
     window.modalManager = new ModalManager(window.tvSystem);
     window.historyManager = new HistoryManager(window.tvSystem);
 });
+
+
+
+    parseDateToISO(dateString) {
+        if (!dateString) return "";
+        const parts = dateString.split("-");
+        if (parts.length === 3) {
+            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+        return dateString; // Retorna o original se o formato não for DD-MM-AAAA
+    }
+
 
